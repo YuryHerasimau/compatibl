@@ -42,6 +42,7 @@ def create_trades(trade_count: int) -> List[TreeTrade]:
         TreeSwap(
             trade_id=f"T{(i + 1):03}",
             trade_type="Swap",
+            notional=200,
             legs=[
                 TreeLeg(leg_type="Fixed", leg_ccy=ccy_list[i % ccy_count]),
                 TreeLeg(leg_type="Floating", leg_ccy=ccy_list[(2 * i) % ccy_count]),
@@ -105,6 +106,16 @@ def query_trades(leg_ccy: Optional[str] = None):
     # at least one of the legs is leg_ccy, otherwise return all trades.
     if leg_ccy is not None:
         trades = TreeSwap.objects(legs__leg_ccy=leg_ccy).order_by("trade_id")
+    else:
+        trades = TreeSwap.objects.order_by("trade_id")
+    result = {"trades": [trade.to_json() for trade in trades]}
+    return result
+
+
+@app.post("/query_by_notional")
+def query_by_notional(min_notional: Optional[float] = None):
+    if min_notional is not None:
+        trades = TreeSwap.objects(min_notional__gte=200).order_by("trade_id")
     else:
         trades = TreeSwap.objects.order_by("trade_id")
     result = {"trades": [trade.to_json() for trade in trades]}
